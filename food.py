@@ -75,10 +75,6 @@ class Net(torch.nn.Module):
     def decode(self, z, edge_label_index):
         return (z[edge_label_index[0]] * z[edge_label_index[1]]).sum(dim=-1)
 
-    # def decode_all(self, z):
-    #     prob_adj = z @ z.t()
-    #     return (prob_adj > 0).nonzero(as_tuple=False).t()
-
     # Want probabilities out to easily interpret results
     def decode_all(self, z):
       prob_adj = z @ z.t()
@@ -172,10 +168,6 @@ class Net(torch.nn.Module):
 
     def decode(self, z, edge_label_index):
         return (z[edge_label_index[0]] * z[edge_label_index[1]]).sum(dim=-1)
-
-    # def decode_all(self, z):
-    #     prob_adj = z @ z.t()
-    #     return (prob_adj > 0).nonzero(as_tuple=False).t()
 
     def decode_all(self, z):
       prob_adj = z @ z.t()
