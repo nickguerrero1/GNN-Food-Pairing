@@ -1,13 +1,4 @@
-import pandas as pd
-import ssl
-from urllib.request import urlopen
-import torch
-from torch_geometric.data import Data
-from torch_geometric.transforms import RandomLinkSplit
-from torch_geometric.transforms import ToUndirected
 import numpy as np
-
-
 from torch_geometric.data import download_url, extract_zip
 import pandas as pd
 import torch
