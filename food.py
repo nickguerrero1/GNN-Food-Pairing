@@ -3,18 +3,11 @@ import ssl
 from urllib.request import urlopen
 import torch
 from torch_geometric.data import Data
-from torch_geometric.transforms import RandomLinkSplit
-from torch_geometric.transforms import ToUndirected
 import numpy as np
-
-
 from torch_geometric.data import download_url, extract_zip
-import pandas as pd
-import torch
 import torch.nn.functional as F
 import torch_geometric.transforms as T
 from torch_geometric.transforms import RandomLinkSplit, ToUndirected
-from torch_geometric.data import Data
 from torch_geometric.nn import GCNConv
 from torch_geometric.nn import SAGEConv
 from itertools import combinations
@@ -22,6 +15,10 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import accuracy_score,roc_auc_score, precision_score
 from torch_geometric.utils import negative_sampling
 import matplotlib.pyplot as plt
+
+# ---------------------------------
+# Importing data set
+# ---------------------------------
 
 edge_url="https://raw.githubusercontent.com/lamypark/FlavorGraph/master/input/edges_191120.csv"
 edges_df=pd.read_csv(edge_url)
@@ -82,7 +79,7 @@ class Net(torch.nn.Module):
       return prob_adj
 
 model = Net(flavorGraph.num_features, 128, 64)
-# model.to(device)
+
 optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01)
 criterion = torch.nn.BCEWithLogitsLoss()
 
@@ -175,7 +172,7 @@ class Net(torch.nn.Module):
       return prob_adj
 
 model = Net(flavorGraph.num_features, 128, 64)
-# model.to(device)
+
 optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01)
 criterion = torch.nn.BCEWithLogitsLoss()
 
