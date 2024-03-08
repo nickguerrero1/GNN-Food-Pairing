@@ -22,13 +22,10 @@ nodes_df=pd.read_csv(node_url)
 edges_df = edges_df[edges_df['edge_type'] == 'ingr-ingr']
 nodes_df = nodes_df[nodes_df['node_type'] == 'ingredient']
 
-# ---------------------------------
-# Creating graph from data
-# ---------------------------------
 flavorGraph = Data()
 
 edge_weight = torch.tensor(edges_df['score'], dtype=torch.float)
-node_index = torch.tensor(nodes_df['node_id'].values, dtype=torch.long)
+node_index = torch.tensor(nodes_df['node_id'], dtype=torch.long)
 
 node_map = dict()
 for i in range(len(node_index)):
