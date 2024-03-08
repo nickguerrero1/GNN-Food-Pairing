@@ -16,10 +16,6 @@ from sklearn.metrics import accuracy_score,roc_auc_score, precision_score
 from torch_geometric.utils import negative_sampling
 import matplotlib.pyplot as plt
 
-# ---------------------------------
-# Importing data set
-# ---------------------------------
-
 edge_url="https://raw.githubusercontent.com/lamypark/FlavorGraph/master/input/edges_191120.csv"
 edges_df=pd.read_csv(edge_url)
 node_url="https://raw.githubusercontent.com/lamypark/FlavorGraph/master/input/nodes_191120.csv"
@@ -31,7 +27,7 @@ nodes_df = nodes_df[nodes_df['node_type'] == 'ingredient']
 flavorGraph = Data()
 
 edge_weight = torch.tensor(edges_df['score'], dtype=torch.float)
-node_index = torch.tensor(nodes_df['node_id'], dtype=torch.long)
+node_index = torch.tensor(nodes_df['node_id'], dtype=torch.int64).unsqueeze(1)
 
 node_map = dict()
 for i in range(len(node_index)):
@@ -43,9 +39,9 @@ edge_index_np = np.array([
 ])
 edge_index = torch.as_tensor(edge_index_np, dtype=torch.long)
 
-flavorGraph.x = node_index.view(node_index.size(0), -1)
-flavorGraph.edge_index = edge_index.type(torch.int64)
-flavorGraph.edge_weight = edge_weight
+flavorGraph.x = node_index # 2D Tensor
+flavorGraph.edge_index = edge_index # 2D Tensor
+flavorGraph.edge_weight = edge_weight # 1D Tensor
 
 transform = RandomLinkSplit(is_undirected=True,add_negative_train_samples=False,disjoint_train_ratio=0.35)
 train_data, val_data, test_data = transform(flavorGraph)
@@ -237,7 +233,6 @@ for i in range(1, min(np.random.poisson(4, 1)[0] + 1, 7)):
   which_one = np.random.randint(0, 10)
   start_node_id = top_nodes.iloc[which_one]["node_id"]
   print(top_nodes.iloc[which_one]["name"])
-
 
 # #Grahping results of both models
 plt.plot(np.arange(len(validationMetrics_GCN)),np.array(validationMetrics_GCN)[:,1],label='test_auc_GCN')
