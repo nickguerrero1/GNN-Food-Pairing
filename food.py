@@ -22,12 +22,11 @@ import matplotlib.pyplot as plt
 
 edge_url="https://raw.githubusercontent.com/lamypark/FlavorGraph/master/input/edges_191120.csv"
 edges_df=pd.read_csv(edge_url)
-edges_df = edges_df.iloc[:111355,:]
-
 node_url="https://raw.githubusercontent.com/lamypark/FlavorGraph/master/input/nodes_191120.csv"
 nodes_df=pd.read_csv(node_url)
-nodes_df = nodes_df[nodes_df['node_id'].isin(
-    (set(edges_df.id_1.values).union(set(edges_df.id_2.values))))]
+
+edges_df = edges_df[edges_df['edge_type'] == 'ingr-ingr']
+nodes_df = nodes_df[nodes_df['node_type'] == 'ingredient']
 
 # ---------------------------------
 # Creating graph from data
