@@ -133,6 +133,7 @@ final_edge_probs_GCN = model.decode_all(z)
 #plotting results
 plt.plot(np.arange(len(validationMetrics_GCN)),np.array(validationMetrics_GCN)[:,1],label='test_auc')
 plt.legend()
+"""plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot1.png')"""
 plt.show()
 
 start_node = np.random.randint(0, 6653)
@@ -226,6 +227,7 @@ final_edge_probs_SAGE = model.decode_all(z)
 # Graphing results
 plt.plot(np.arange(len(validationMetrics_SAGE)),np.array(validationMetrics_SAGE)[:,1],label='test_auc')
 plt.legend()
+"""plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot2.png')"""
 plt.show()
 start_node = np.random.randint(0, 6653)
 for i in range(1, min(np.random.poisson(4, 1)[0] + 1, 7)):
@@ -238,4 +240,5 @@ for i in range(1, min(np.random.poisson(4, 1)[0] + 1, 7)):
 plt.plot(np.arange(len(validationMetrics_GCN)),np.array(validationMetrics_GCN)[:,1],label='test_auc_GCN')
 plt.plot(np.arange(len(validationMetrics_SAGE)),np.array(validationMetrics_SAGE)[:,1],label='test_auc_SAGE')
 plt.legend()
+"""plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot3.png')"""
 plt.show()
