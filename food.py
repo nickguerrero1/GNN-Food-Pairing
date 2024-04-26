@@ -16,44 +16,44 @@ from sklearn.metrics import accuracy_score,roc_auc_score, precision_score
 from torch_geometric.utils import negative_sampling
 import matplotlib.pyplot as plt
 
-#load the data
+# load the data
 edge_url="https://raw.githubusercontent.com/lamypark/FlavorGraph/master/input/edges_191120.csv"
 edges_df=pd.read_csv(edge_url)
 node_url="https://raw.githubusercontent.com/lamypark/FlavorGraph/master/input/nodes_191120.csv"
 nodes_df=pd.read_csv(node_url)
 
-#only keep ingredient related items
+# only keep ingredient related items
 edges_df = edges_df[edges_df['edge_type'] == 'ingr-ingr']
 nodes_df = nodes_df[nodes_df['node_type'] == 'ingredient']
 
-#initialize data object
+# initialize data object
 flavorGraph = Data() 
 
-#create 1xM tensor of the edge weights
+# create 1xM tensor of the edge weights
 edge_weight = torch.tensor(edges_df['score'], dtype=torch.float)
-#create Nx1 tensor of the original node IDs
+# create Nx1 tensor of the original node IDs
 node_index = torch.tensor(nodes_df['node_id'], dtype=torch.int64).unsqueeze(1)
 
-#give every node an index
+# give every node an index
 node_map = dict()
 for i in range(len(node_index)):
     node_map[(int(node_index[i]))] = i
 
-#convert edges into 2xM tensor where each column is an edge, and the 2 rows are the nodes involved
-#initially make it as a 2D array
+# convert edges into 2xM tensor where each column is an edge, and the 2 rows are the nodes involved
+# initially make it as a 2D array
 edge_index_np = np.array([
     edges_df.id_1.apply(lambda x: node_map[x]).values,
     edges_df.id_2.apply(lambda x: node_map[x]).values
 ])
-#converts the 2D array into a tensor
+# convert 2D array into tensor
 edge_index = torch.as_tensor(edge_index_np, dtype=torch.long)
 
-#populate our Data() object
-flavorGraph.x = node_index # Nx1 tensor of original node IDs
-flavorGraph.edge_index = edge_index # 2xM tensor of edges (ingredient relationships)
-flavorGraph.edge_weight = edge_weight # 1xM tensor of edge weights
+# populate Data() object
+flavorGraph.x = node_index              # Nx1 tensor of original node IDs
+flavorGraph.edge_index = edge_index     # 2xM tensor of edges (ingredient relationships)
+flavorGraph.edge_weight = edge_weight   # 1xM tensor of edge weights
 
-#split FlavorGraph into training, validation, and test datasets
+# split FlavorGraph into training, validation, and test datasets
 transform = RandomLinkSplit(is_undirected=True,add_negative_train_samples=False,disjoint_train_ratio=0.35)
 train_data, val_data, test_data = transform(flavorGraph)
 
@@ -81,11 +81,10 @@ class Net(torch.nn.Module):
       prob_adj = torch.sigmoid(prob_adj)  # Apply sigmoid function to get probabilities
       return prob_adj
 
-model = Net(flavorGraph.num_features, 128, 64)
+model = Net(1, 128, 64)
 
 optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01)
 criterion = torch.nn.BCEWithLogitsLoss()
-
 
 def train():
     model.train()
@@ -111,7 +110,6 @@ def train():
     loss.backward()
     optimizer.step()
     return loss
-
 
 @torch.no_grad()
 def test(data):
@@ -147,12 +145,17 @@ plt.legend()
 #plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot1.png')
 plt.show()
 
-start_node = np.random.randint(0, 6653)
-for i in range(1, min(np.random.poisson(4, 1)[0] + 1, 7)):
-  top_nodes = nodes_df.iloc[final_edge_probs_GCN.topk(10, dim=1).indices[start_node, ]]
-  which_one = np.random.randint(0, 10)
-  start_node_id = top_nodes.iloc[which_one]["node_id"]
-  print(top_nodes.iloc[which_one]["name"])
+# decide sample recipe by choosing arbitrary node and performing random walk to up to 6 other nodes
+def generate_recipe(final_edge_probs):
+    start_node = np.random.randint(0, 6653)
+    for i in range(1, min(np.random.poisson(4, 1)[0] + 1, 7)):
+        top_nodes = nodes_df.iloc[final_edge_probs.topk(10, dim=1).indices[start_node, ]]
+        which_one = np.random.randint(0, 10)
+        start_node_id = top_nodes.iloc[which_one]["node_id"]
+        print(top_nodes.iloc[which_one]["name"])
+
+# perform random walk to generate recipe
+generate_recipe(final_edge_probs_GCN)
 
 # ---------------------------------
 # Building, training, and testing SAGE model
@@ -175,11 +178,10 @@ class Net(torch.nn.Module):
       prob_adj = torch.sigmoid(prob_adj)  # Apply sigmoid function to get probabilities
       return prob_adj
 
-model = Net(flavorGraph.num_features, 128, 64)
+model = Net(1, 128, 64)
 
 optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01)
 criterion = torch.nn.BCEWithLogitsLoss()
-
 
 def train():
     model.train()
@@ -206,7 +208,6 @@ def train():
     optimizer.step()
     return loss
 
-
 @torch.no_grad()
 def test(data):
     model.eval()
@@ -217,7 +218,6 @@ def test(data):
     return roc_auc_score(y, pred)
 
 validationMetrics_SAGE = []
-
 
 best_val_auc = final_test_auc = 0
 for epoch in range(1, 150):
@@ -240,14 +240,12 @@ plt.plot(np.arange(len(validationMetrics_SAGE)),np.array(validationMetrics_SAGE)
 plt.legend()
 #plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot2.png')
 plt.show()
-start_node = np.random.randint(0, 6653)
-for i in range(1, min(np.random.poisson(4, 1)[0] + 1, 7)):
-  top_nodes = nodes_df.iloc[final_edge_probs_SAGE.topk(10, dim=1).indices[start_node, ]]
-  which_one = np.random.randint(0, 10)
-  start_node_id = top_nodes.iloc[which_one]["node_id"]
-  print(top_nodes.iloc[which_one]["name"])
 
-# #Grahping results of both models
+# perform random walk to generate recipe
+generate_recipe(final_edge_probs_SAGE)
+
+
+# Graphing results of both models
 plt.plot(np.arange(len(validationMetrics_GCN)),np.array(validationMetrics_GCN)[:,1],label='test_auc_GCN')
 plt.plot(np.arange(len(validationMetrics_SAGE)),np.array(validationMetrics_SAGE)[:,1],label='test_auc_SAGE')
 plt.legend()
