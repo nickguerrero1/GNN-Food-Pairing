@@ -120,21 +120,22 @@ def test(data):
     pred = out.cpu().numpy()
     return roc_auc_score(y, pred)
 
+def AUC_across_epochs(validationMetrics):
+    best_val_auc = final_test_auc = 0
+    for epoch in range(1, 150):
+        loss = train()
+        val_auc = test(val_data)
+        test_auc = test(test_data)
+        if val_auc > best_val_auc:
+            best_val_auc = val_auc
+            final_test_auc = test_auc
+        validationMetrics.append([val_auc, test_auc])
+        print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}, Val: {val_auc:.4f}, '
+            f'Test: {test_auc:.4f}')
+    print(f'Final Test: {final_test_auc:.4f}')
+
 validationMetrics_GCN = []
-
-best_val_auc = final_test_auc = 0
-for epoch in range(1, 150):
-    loss = train()
-    val_auc = test(val_data)
-    test_auc = test(test_data)
-    if val_auc > best_val_auc:
-        best_val_auc = val_auc
-        final_test_auc = test_auc
-    validationMetrics_GCN.append([val_auc, test_auc])
-    print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}, Val: {val_auc:.4f}, '
-          f'Test: {test_auc:.4f}')
-
-print(f'Final Test: {final_test_auc:.4f}')
+AUC_across_epochs(validationMetrics_GCN)
 
 z = model.encode(test_data.x, test_data.edge_index)
 final_edge_probs_GCN = model.decode_all(z)
@@ -183,59 +184,13 @@ model = Net(1, 128, 64)
 optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01)
 criterion = torch.nn.BCEWithLogitsLoss()
 
-def train():
-    model.train()
-    optimizer.zero_grad()
-    z = model.encode(train_data.x, train_data.edge_index)
-
-    # We perform a new round of negative sampling for every training epoch:
-    neg_edge_index = negative_sampling(
-        edge_index=train_data.edge_index, num_nodes=train_data.num_nodes,
-        num_neg_samples=train_data.edge_label_index.size(1), method='sparse')
-
-    edge_label_index = torch.cat(
-        [train_data.edge_label_index, neg_edge_index],
-        dim=-1,
-    )
-    edge_label = torch.cat([
-        train_data.edge_label,
-        train_data.edge_label.new_zeros(neg_edge_index.size(1))
-    ], dim=0)
-
-    out = model.decode(z, edge_label_index).view(-1)
-    loss = criterion(out, edge_label)
-    loss.backward()
-    optimizer.step()
-    return loss
-
-@torch.no_grad()
-def test(data):
-    model.eval()
-    z = model.encode(data.x, data.edge_index)
-    out = model.decode(z, data.edge_label_index).view(-1).sigmoid()
-    y = data.edge_label.cpu().numpy()
-    pred = out.cpu().numpy()
-    return roc_auc_score(y, pred)
-
 validationMetrics_SAGE = []
-
-best_val_auc = final_test_auc = 0
-for epoch in range(1, 150):
-    loss = train()
-    val_auc = test(val_data)
-    test_auc = test(test_data)
-    if val_auc > best_val_auc:
-        best_val_auc = val_auc
-        final_test_auc = test_auc
-    validationMetrics_SAGE.append([val_auc, test_auc])
-    print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}, Val: {val_auc:.4f}, '
-          f'Test: {test_auc:.4f}')
-
-print(f'Final Test: {final_test_auc:.4f}')
+AUC_across_epochs(validationMetrics_SAGE)
 
 z = model.encode(test_data.x, test_data.edge_index)
 final_edge_probs_SAGE = model.decode_all(z)
-# Graphing results
+
+# Plotting results
 plt.plot(np.arange(len(validationMetrics_SAGE)),np.array(validationMetrics_SAGE)[:,1],label='test_auc')
 plt.legend()
 # plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot2.png')
