@@ -151,10 +151,17 @@ class Net(torch.nn.Module):
         super().__init__()
         self.conv1 = SAGEConv(in_channels, hidden_channels)
         self.conv2 = SAGEConv(hidden_channels, out_channels)
+        self.bn1 = torch.nn.BatchNorm1d(hidden_channels)  #Batch normalization to improve accuracy
+        self.bn2 = torch.nn.BatchNorm1d(out_channels)
+        self.dropout = 0.5 #dropout to improve accuracy
+
 
     def encode(self, x, edge_index):
-        x = self.conv1(x.float(), edge_index).relu()
-        return self.conv2(x, edge_index)
+        # x = self.conv1(x.float(), edge_index).relu()
+        # return self.conv2(x, edge_index)
+        x = F.relu(self.bn1(self.conv1(x.float(), edge_index)))
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        return self.bn2(self.conv2(x, edge_index))
 
     def decode(self, z, edge_label_index):
         return (z[edge_label_index[0]] * z[edge_label_index[1]]).sum(dim=-1)
@@ -166,7 +173,7 @@ class Net(torch.nn.Module):
 
 model = Net(flavorGraph.num_features, 128, 64)
 
-optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01, weight_decay=1e-4)
 criterion = torch.nn.BCEWithLogitsLoss()
 
 
