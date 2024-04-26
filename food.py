@@ -106,7 +106,9 @@ def AUC_across_epochs(validationMetrics):
     print(f'Final Test: {final_test_auc:.4f}')
 
 # Decide sample recipe by choosing arbitrary node and performing random walk to up to 6 other nodes
-def generate_recipe(final_edge_probs):
+def generate_recipe():
+    z = model.encode(test_data.x, test_data.edge_index)
+    final_edge_probs = model.decode_all(z)
     start_node = np.random.randint(0, 6653)
     for i in range(1, min(np.random.poisson(4, 1)[0] + 1, 7)):
         top_nodes = nodes_df.iloc[final_edge_probs.topk(10, dim=1).indices[start_node, ]]
@@ -150,10 +152,8 @@ plt.plot(np.arange(len(validationMetrics_GCN)),np.array(validationMetrics_GCN)[:
 plt.legend()
 plt.show()
 
-z = model.encode(test_data.x, test_data.edge_index)
-final_edge_probs_GCN = model.decode_all(z)
 # Perform random walk to generate recipe
-generate_recipe(final_edge_probs_GCN)
+generate_recipe()
 
 # ---------------------------------
 # Building, training, and testing SAGE model
@@ -163,15 +163,12 @@ class Net(torch.nn.Module):
         super().__init__()
         self.conv1 = SAGEConv(in_channels, hidden_channels)
         self.conv2 = SAGEConv(hidden_channels, out_channels)
-        self.bn1 = torch.nn.BatchNorm1d(hidden_channels)  #Batch normalization to improve accuracy
+        self.bn1 = torch.nn.BatchNorm1d(hidden_channels)        # Batch normalization to improve accuracy
         self.bn2 = torch.nn.BatchNorm1d(out_channels)
-        self.dropout = 0.5 #dropout to improve accuracy
-
+        self.dropout = 0.995                                    # Dropout to improve accuracy
 
     def encode(self, x, edge_index):
-        # x = self.conv1(x.float(), edge_index).relu()
-        # return self.conv2(x, edge_index)
-        x = F.relu(self.bn1(self.conv1(x.float(), edge_index)))
+        x = self.bn1(self.conv1(x.float(), edge_index)).relu()
         x = F.dropout(x, p=self.dropout, training=self.training)
         return self.bn2(self.conv2(x, edge_index))
 
@@ -184,7 +181,7 @@ class Net(torch.nn.Module):
       return prob_adj
 
 model = Net(1, 128, 64)
-optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01, weight_decay=1e-4)
+optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01)
 criterion = torch.nn.BCEWithLogitsLoss()
 
 validationMetrics_SAGE = []
@@ -195,10 +192,8 @@ plt.plot(np.arange(len(validationMetrics_SAGE)),np.array(validationMetrics_SAGE)
 plt.legend()
 plt.show()
 
-z = model.encode(test_data.x, test_data.edge_index)
-final_edge_probs_SAGE = model.decode_all(z)
 # Perform random walk to generate recipe
-generate_recipe(final_edge_probs_SAGE)
+generate_recipe()
 
 
 # Plotting results of both models
