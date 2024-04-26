@@ -82,7 +82,6 @@ class Net(torch.nn.Module):
       return prob_adj
 
 model = Net(1, 128, 64)
-
 optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01)
 criterion = torch.nn.BCEWithLogitsLoss()
 
@@ -137,13 +136,9 @@ def AUC_across_epochs(validationMetrics):
 validationMetrics_GCN = []
 AUC_across_epochs(validationMetrics_GCN)
 
-z = model.encode(test_data.x, test_data.edge_index)
-final_edge_probs_GCN = model.decode_all(z)
-
 # Plotting results
 plt.plot(np.arange(len(validationMetrics_GCN)),np.array(validationMetrics_GCN)[:,1],label='test_auc')
 plt.legend()
-# plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot1.png')
 plt.show()
 
 # Decide sample recipe by choosing arbitrary node and performing random walk to up to 6 other nodes
@@ -155,6 +150,8 @@ def generate_recipe(final_edge_probs):
         start_node_id = top_nodes.iloc[which_one]["node_id"]
         print(top_nodes.iloc[which_one]["name"])
 
+z = model.encode(test_data.x, test_data.edge_index)
+final_edge_probs_GCN = model.decode_all(z)
 # Perform random walk to generate recipe
 generate_recipe(final_edge_probs_GCN)
 
@@ -180,22 +177,19 @@ class Net(torch.nn.Module):
       return prob_adj
 
 model = Net(1, 128, 64)
-
 optimizer = torch.optim.Adam(params=model.parameters(), lr=0.01)
 criterion = torch.nn.BCEWithLogitsLoss()
 
 validationMetrics_SAGE = []
 AUC_across_epochs(validationMetrics_SAGE)
 
-z = model.encode(test_data.x, test_data.edge_index)
-final_edge_probs_SAGE = model.decode_all(z)
-
 # Plotting results
 plt.plot(np.arange(len(validationMetrics_SAGE)),np.array(validationMetrics_SAGE)[:,1],label='test_auc')
 plt.legend()
-# plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot2.png')
 plt.show()
 
+z = model.encode(test_data.x, test_data.edge_index)
+final_edge_probs_SAGE = model.decode_all(z)
 # Perform random walk to generate recipe
 generate_recipe(final_edge_probs_SAGE)
 
@@ -204,5 +198,5 @@ generate_recipe(final_edge_probs_SAGE)
 plt.plot(np.arange(len(validationMetrics_GCN)),np.array(validationMetrics_GCN)[:,1],label='test_auc_GCN')
 plt.plot(np.arange(len(validationMetrics_SAGE)),np.array(validationMetrics_SAGE)[:,1],label='test_auc_SAGE')
 plt.legend()
-# plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot3.png')
+# plt.savefig('/Users/nicholasguerrero/Desktop/Coursework/CS365/GNN-Food-Pairing/plot.png')
 plt.show()
